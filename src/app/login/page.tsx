@@ -1,10 +1,11 @@
 "use client";
 // pages/login.js
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // import { signIn } from "next-auth/react";
 import { Container, Typography, Paper, TextField, Button } from "@mui/material";
 import { styled, useTheme } from "@mui/system";
 import { useRouter } from "next/navigation";
+import { addData, initDatabase } from "@/utils/indexedDB";
 
 const StyledContainer = styled(Container)({
   display: "flex",
@@ -41,8 +42,15 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [credentials, setCredentials] = useState({});
-  const [email, setEmail] = useState<string>();
-  const [password, setPassword] = useState<string>();
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+
+  useEffect(() => {
+    // データベースの初期化
+    initDatabase().catch((error) => {
+      console.error("Error initializing database:", error);
+    });
+  }, [email, password]);
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -60,6 +68,15 @@ export default function LoginPage() {
   const onClickCreateAccount = () => {
     console.log("onClickCreateAccount");
     if (email === "test" && password === "test") {
+      // データの追加
+      const newData = { email, password };
+      addData(newData)
+        .then((result) => {
+          console.log("Data added successfully:", result);
+        })
+        .catch((error) => {
+          console.error("Error adding data:", error);
+        });
       router.push("/settings/create-account");
     }
   };
