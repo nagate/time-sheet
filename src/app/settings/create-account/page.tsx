@@ -19,7 +19,7 @@ export default function Page() {
 
   return (
     <>
-      <ButtonAppBar />
+      <ButtonAppBar titleName="アカウント登録" />
       <div className="bg-white">
         新規アカウント登録
         <TextField id="email" label="メールアドレス" variant="outlined" />

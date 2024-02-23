@@ -1,33 +1,111 @@
 "use client";
-import ButtonAppBar from "@/components/organisms/buttonAppBar";
-import { Button, TextField } from "@mui/material";
+// pages/login.js
+import { useState } from "react";
+// import { signIn } from "next-auth/react";
+import { Container, Typography, Paper, TextField, Button } from "@mui/material";
+import { styled, useTheme } from "@mui/system";
 import { useRouter } from "next/navigation";
 
-export default function Login() {
+const StyledContainer = styled(Container)({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  minHeight: "100vh", // ページ全体を占めるようにする
+  justifyContent: "center",
+});
+
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  width: "100%",
+  maxWidth: "400px", // iPhoneサイズに合わせる
+}));
+
+const StyledForm = styled("form")({
+  width: "100%",
+  marginTop: "20px",
+});
+
+const StyledTextField = styled(TextField)({
+  marginTop: "20px",
+});
+
+const StyledButton = styled(Button)({
+  marginTop: "20px",
+});
+
+export default function LoginPage() {
+  const theme = useTheme();
   const router = useRouter();
 
-  const onClicklogin = () => {
-    console.log("onClicklogin");
+  const [credentials, setCredentials] = useState({});
+  const [email, setEmail] = useState<string>();
+  const [password, setPassword] = useState<string>();
+
+  const handleSubmit = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    // const result = await signIn("credentials", {
+    //   redirect: false,
+    //   ...credentials,
+    // });
+
+    // if (!result.error) {
+    //   // ログイン成功時の処理
+    //   console.log("Successfully logged in!");
+    // }
   };
 
   const onClickCreateAccount = () => {
     console.log("onClickCreateAccount");
-    router.push("/settings/create-account");
+    if (email === "test" && password === "test") {
+      router.push("/settings/create-account");
+    }
   };
 
   return (
-    <>
-      <ButtonAppBar />
-      <div className="bg-white">
-        <TextField id="email" label="メールアドレス" variant="outlined" />
-        <TextField id="password" label="パスワード" variant="outlined" />
-        <Button variant="outlined" onClick={onClicklogin}>
-          ログイン
-        </Button>
-        <Button variant="outlined" onClick={onClickCreateAccount}>
-          新規登録
-        </Button>
-      </div>
-    </>
+    <StyledContainer maxWidth="xs">
+      <StyledPaper elevation={3} theme={theme}>
+        <Typography component="h1" variant="h5">
+          Login
+        </Typography>
+        <StyledForm onSubmit={handleSubmit}>
+          <StyledTextField
+            label="Email"
+            type="email"
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            onChange={(e) =>
+              // setCredentials({ ...credentials, email: e.target.value })
+              setEmail(e.target.value)
+            }
+          />
+          <StyledTextField
+            label="Password"
+            type="password"
+            variant="outlined"
+            margin="normal"
+            required
+            fullWidth
+            onChange={(e) =>
+              // setCredentials({ ...credentials, password: e.target.value })
+              setPassword(e.target.value)
+            }
+          />
+          <StyledButton
+            type="submit"
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={onClickCreateAccount}
+          >
+            Login
+          </StyledButton>
+        </StyledForm>
+      </StyledPaper>
+    </StyledContainer>
   );
 }
