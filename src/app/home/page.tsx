@@ -44,8 +44,6 @@ const getWorkTImes = ({
 };
 
 export default function HomePage() {
-  // TODO: useMemoを使う？
-  // const today = new Date();
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
@@ -74,6 +72,8 @@ export default function HomePage() {
     setEndTime(new Date());
   };
 
+  const getEndWorkComponent = () => {};
+
   return (
     <>
       <TodayBox>
@@ -91,14 +91,16 @@ export default function HomePage() {
           startIcon={<Work />}
         ></StyledTimeField>
       </Margin8Box>
-      <Margin8Box>
-        <StyledTimeField
-          date={endTime}
-          text={"退勤"}
-          onClick={handleClickEnd}
-          startIcon={<TimeToLeave />}
-        ></StyledTimeField>
-      </Margin8Box>
+      {startTime && (
+        <Margin8Box>
+          <StyledTimeField
+            date={endTime}
+            text={"退勤"}
+            onClick={handleClickEnd}
+            startIcon={<TimeToLeave />}
+          ></StyledTimeField>
+        </Margin8Box>
+      )}
       <div>就業時間</div>
       <div>{workTime}</div>
     </>
