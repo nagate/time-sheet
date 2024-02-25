@@ -30,9 +30,9 @@ const getWorkTImes = ({
   endTime: Date | null;
   startTime: Date | null;
 }) => {
-  const diffMinutes = NumberUtil.truncate(
-    datetimeUtil.subtractTime(startTime, endTime) / (1000 * 60)
-  );
+  let diffTime = datetimeUtil.subtractTime(startTime, endTime);
+  diffTime = diffTime < 0 ? 0 : diffTime / (1000 * 60);
+  const diffMinutes = NumberUtil.truncate(diffTime);
   const hours = NumberUtil.truncate(diffMinutes / 60);
   const minutes = diffMinutes % 60;
 
@@ -53,7 +53,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // 60秒
-    const intervalTime = 1000 * 6;
+    const intervalTime = 1000 * 60;
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, intervalTime);
