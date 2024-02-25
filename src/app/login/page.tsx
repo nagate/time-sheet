@@ -77,7 +77,7 @@ export default function LoginPage() {
         .catch((error) => {
           console.error("Error adding data:", error);
         });
-      router.push("/settings/create-account");
+      router.push("/home");
     }
   };
 
