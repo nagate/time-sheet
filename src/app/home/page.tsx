@@ -31,6 +31,7 @@ const Margin8Box = styled(Box)({
   margin: 8,
 });
 
+// 就業時間を計算
 const getWorkTImes = ({
   endTime,
   startTime,
@@ -40,11 +41,25 @@ const getWorkTImes = ({
   startTime: Date | null;
   breakTime: number;
 }) => {
-  // TODO: 最初に秒は切り捨てして、分以上で計算する
+  if (!startTime) {
+    // 出勤日未入力の場合
+    return `00:00`;
+  }
+
+  // 秒は切り捨て、分単位で計算
+  const s = datetimeUtil.truncateSeconds(startTime);
+  // 退勤日未入力の場合、現在日時で計算
+  const e = datetimeUtil.truncateSeconds(endTime ?? new Date());
+
   // マイナスを考慮に入れる→マイナスの場合は0にする
-  let diffTime = datetimeUtil.subtractTime(startTime, endTime);
+  let diffTime = datetimeUtil.subtractTime(s, e);
   diffTime = diffTime < 0 ? 0 : diffTime / (1000 * 60) - breakTime;
   const diffMinutes = NumberUtil.truncate(diffTime);
+
+  if (diffMinutes < 0) {
+    // 出勤時間がマイナスの場合
+    return `00:00`;
+  }
   const hours = NumberUtil.truncate(diffMinutes / 60);
   const minutes = diffMinutes % 60;
 
@@ -63,7 +78,7 @@ export default function HomePage() {
   const [breakTime, setBreakTime] = useState<number>(60);
 
   useEffect(() => {
-    // 1秒
+    // 1秒おきに日付を更新
     const intervalTime = 1000;
     const interval = setInterval(() => {
       setCurrentTime(new Date());
@@ -77,18 +92,22 @@ export default function HomePage() {
     setWorkTime(getWorkTImes({ endTime: et, startTime, breakTime }));
   }, [endTime, currentTime, startTime, breakTime]);
 
+  // 出勤
   const handleClickStart = () => {
     setStartTime(new Date());
   };
 
+  // 退勤
   const handleClickEnd = () => {
     setEndTime(new Date());
   };
 
+  // 休憩
   const handleChangeBreakTime = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreakTime(Number(e.target.value));
   };
 
+  // 削除
   const handleClickDelete = () => {
     // TODO: 確認ダイアログを表示する
     setStartTime(null);

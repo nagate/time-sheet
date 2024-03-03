@@ -6,8 +6,11 @@ export class NumberUtil {
    * @returns 2桁の文字列
    */
   static toTwoDigits(num: number): string {
-    const str = num.toString();
-    return str.length === 1 ? `0${str}` : str;
+    // 絶対値を取得
+    const absNum = Math.abs(num);
+    const str = absNum.toString();
+    // TODO: 2桁以上の場合の考慮
+    return str.length === 1 ? (num < 0 ? "-0" : "0") + str : str;
   }
 
   /**
@@ -136,4 +139,3 @@ export class NumberUtil {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }
-

@@ -18,6 +18,8 @@ export interface DatetimeUtil {
   addYears(date: Date, years: number): Date;
   // 日付から年数を減算する
   subtractYears(date: Date, years: number): Date;
+  // 秒を切り捨て
+  truncateSeconds(date: Date): Date;
   //
   getFormattedDatetime({
     date,
@@ -127,6 +129,12 @@ const datetimeUtil: DatetimeUtil = {
     );
     fm = fm.replace(/aaa/g, WEEKS[date.getDay()]);
     return fm;
+  },
+
+  truncateSeconds(date: Date): Date {
+    const newDate = new Date(date.getTime());
+    newDate.setSeconds(0, 0);
+    return newDate;
   },
 
   // 日付をフォーマットして文字列に変換する
