@@ -2,11 +2,11 @@
 import Stamping from "@/components/atoms/stampings/stamping";
 import {
   getTimeSheet,
+  insertMonthTimeSheet,
   insertTimeSheet,
   updateTimeSheet,
 } from "@/services/timeSheetService";
 import datetimeUtil from "@/utils/datetime";
-// import { addData, addTimeSheet } from "@/utils/indexedDB";
 import { NumberUtil } from "@/utils/numburUtil";
 import { Delete, TimeToLeave, Work } from "@mui/icons-material";
 import { Box, Button, TextField, styled } from "@mui/material";
@@ -115,11 +115,29 @@ export default function HomePage() {
         setBreakTime(breakTime);
       } else {
         // まだデータがない場合は作成
-        insertTimeSheet({
-          id: today.current,
-          date: new Date(),
-          breakTime: 0,
-        });
+        // TODO: １ヶ月分を作成
+        insertMonthTimeSheet(
+          Number(
+            datetimeUtil.getFormattedDatetime({
+              date: new Date(),
+              format: "yyyy",
+              zeroFilled: true,
+            })
+          ),
+          Number(
+            datetimeUtil.getFormattedDatetime({
+              date: new Date(),
+              format: "MM",
+              zeroFilled: true,
+            })
+          )
+        );
+
+        // insertTimeSheet({
+        //   id: today.current,
+        //   date: new Date(),
+        //   breakTime: 0,
+        // });
       }
     };
 

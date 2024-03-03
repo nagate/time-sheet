@@ -1,7 +1,11 @@
 export type TimeSheet = {
-  id: number;
+  id: string;
   date: Date;
-  startTime: Date;
-  endTime: Date;
+  year?: string;
+  month?: string;
+  yearMonth?: string;
+  day?: string;
+  startTime?: Date;
+  endTime?: Date;
   breakTime: number;
 };

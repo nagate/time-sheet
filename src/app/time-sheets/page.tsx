@@ -2,25 +2,33 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import datetimeUtil from "@/utils/datetime";
+import {
+  bulkInsertTimeSheet,
+  getTimeSheetByYearMonth,
+  insertMonthTimeSheet,
+} from "@/services/timeSheetService";
+import { TimeSheet } from "@/types/timeSheetType";
 
 const columns: GridColDef[] = [
   { field: "date", headerName: "日付", width: 60, sortable: false },
   {
-    field: "start",
+    field: "startTime",
     headerName: "出勤",
+    type: "dateTime",
     width: 60,
     sortable: false,
   },
   {
-    field: "end",
+    field: "endTime",
     headerName: "退勤",
+    type: "date",
     width: 60,
     sortable: false,
   },
   {
-    field: "break",
+    field: "breakTime",
     headerName: "休憩",
     type: "number",
     width: 40,
@@ -57,17 +65,38 @@ export default function TimeSheetsPage() {
     })
   );
 
+  const [timeSheets, setTimeSheets] = useState<TimeSheet[]>([]);
+
   useEffect(() => {
-    const date = datetimeUtil.createMonthDates(
-      Number(thisYear),
-      Number(thisMonth)
-    );
-    // TODO: データがない場合は作成する
+    const getData = async () => {
+      getTimeSheetByYearMonth(`${thisYear.current}${thisMonth.current}`).then(
+        (data) => {
+          console.table(data);
+          setTimeSheets(data);
+          if (data.length === 0) {
+            // データ作成
+            insertMonthTimeSheet(
+              Number(thisYear.current),
+              Number(thisMonth.current)
+            ).then(() => {
+              getTimeSheetByYearMonth(
+                `${thisYear.current}${thisMonth.current}`
+              ).then((data) => {
+                console.table(data);
+                setTimeSheets(data);
+              });
+            });
+          }
+        }
+      );
+    };
+
+    getData();
   }, []);
   return (
     <Box sx={{ height: 400, width: "100%" }}>
       <DataGrid
-        rows={rows}
+        rows={timeSheets}
         columns={columns}
         // initialState={{
         //   pagination: {
