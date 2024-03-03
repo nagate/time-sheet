@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/system";
 import NormalAppBar from "../appBars/nomalAppBar";
+import NormalBottomNavigation from "../bottomNavigations/nomalBottomNavigation";
 
 // グローバルなスタイルやテーマ設定を行う
 const theme = createTheme();
@@ -28,7 +29,10 @@ export default function NormalLayout({
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <NormalAppBar title={title}></NormalAppBar>
-      <StyledContainer maxWidth="lg">{children}</StyledContainer>
+      <StyledContainer maxWidth="lg">
+        {children}
+        <NormalBottomNavigation></NormalBottomNavigation>
+      </StyledContainer>
     </ThemeProvider>
   );
 }

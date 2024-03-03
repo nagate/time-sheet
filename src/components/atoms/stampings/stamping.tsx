@@ -1,6 +1,6 @@
 "use client";
 import datetimeUtil from "@/utils/datetime";
-import { Box, Button, styled } from "@mui/material";
+import { Box, Button, TextField, styled } from "@mui/material";
 import React, { MouseEventHandler, ReactNode } from "react";
 
 const StyledBox = styled(Box)({
@@ -14,7 +14,7 @@ const Time = styled(Box)({
   marginRight: "8px",
 });
 
-export default function TimeField({
+export default function Stamping({
   date,
   text,
   onClick,
@@ -53,11 +53,20 @@ export default function TimeField({
 
   return (
     <StyledBox>
-      <Time>
+      {/* <Time>
         {date
           ? datetimeUtil.getFormattedDatetime({ date, format: "HH:mm" })
           : "00:00"}
-      </Time>
+      </Time> */}
+      <TextField
+        label={text}
+        value={
+          date
+            ? datetimeUtil.getFormattedDatetime({ date, format: "HH:mm" })
+            : "00:00"
+        }
+        disabled
+      ></TextField>
       {getButton(date)}
     </StyledBox>
   );
