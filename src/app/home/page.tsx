@@ -1,10 +1,16 @@
 "use client";
 import Stamping from "@/components/atoms/stampings/stamping";
+import {
+  getTimeSheet,
+  insertTimeSheet,
+  updateTimeSheet,
+} from "@/services/timeSheetService";
 import datetimeUtil from "@/utils/datetime";
+// import { addData, addTimeSheet } from "@/utils/indexedDB";
 import { NumberUtil } from "@/utils/numburUtil";
 import { Delete, TimeToLeave, Work } from "@mui/icons-material";
 import { Box, Button, TextField, styled } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -40,7 +46,7 @@ const getWorkTImes = ({
   endTime: Date | null;
   startTime: Date | null;
   breakTime: number;
-}) => {
+}): string => {
   if (!startTime) {
     // 出勤日未入力の場合
     return `00:00`;
@@ -71,6 +77,13 @@ const getWorkTImes = ({
 };
 
 export default function HomePage() {
+  const today = useRef<string>(
+    datetimeUtil.getFormattedDatetime({
+      date: new Date(),
+      format: "yyyyMMdd",
+      zeroFilled: true,
+    })
+  );
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [endTime, setEndTime] = useState<Date | null>(null);
@@ -83,28 +96,73 @@ export default function HomePage() {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, intervalTime);
-
     return () => clearInterval(interval);
-  });
+  }, []);
 
   useEffect(() => {
     const et = endTime || currentTime;
     setWorkTime(getWorkTImes({ endTime: et, startTime, breakTime }));
   }, [endTime, currentTime, startTime, breakTime]);
 
+  useEffect(() => {
+    const getData = async () => {
+      const result = await getTimeSheet(today.current);
+      console.log(result);
+      if (result) {
+        const { id, startTime, endTime, breakTime } = result;
+        startTime && setStartTime(startTime);
+        endTime && setEndTime(endTime);
+        setBreakTime(breakTime);
+      } else {
+        // まだデータがない場合は作成
+        insertTimeSheet({
+          id: today.current,
+          date: new Date(),
+          breakTime: 0,
+        });
+      }
+    };
+
+    getData();
+  }, []);
+
   // 出勤
   const handleClickStart = () => {
-    setStartTime(new Date());
+    const s = new Date();
+    setStartTime(s);
+    updateTimeSheet({
+      id: today.current,
+      date: new Date(),
+      startTime: s,
+      endTime: endTime ?? undefined,
+      breakTime,
+    });
   };
 
   // 退勤
   const handleClickEnd = () => {
-    setEndTime(new Date());
+    const e = new Date();
+
+    setEndTime(e);
+    updateTimeSheet({
+      id: today.current,
+      date: new Date(),
+      startTime: startTime ?? undefined,
+      endTime: e,
+      breakTime,
+    });
   };
 
   // 休憩
   const handleChangeBreakTime = (e: React.ChangeEvent<HTMLInputElement>) => {
     setBreakTime(Number(e.target.value));
+    updateTimeSheet({
+      id: today.current,
+      date: new Date(),
+      startTime: startTime ?? undefined,
+      endTime: endTime ?? undefined,
+      breakTime,
+    });
   };
 
   // 削除
@@ -114,6 +172,13 @@ export default function HomePage() {
     setEndTime(null);
     setWorkTime("00:00");
     setBreakTime(60);
+    updateTimeSheet({
+      id: today.current,
+      date: new Date(),
+      startTime: undefined,
+      endTime: undefined,
+      breakTime: 60,
+    });
   };
 
   return (
