@@ -17,6 +17,7 @@ const initDB = (): Promise<IDBDatabase> => {
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
+        // TODO: pkをyyyy,mm,ddに変更する
         db.createObjectStore(STORE_NAME, {
           keyPath: "id",
           // autoIncrement: true,

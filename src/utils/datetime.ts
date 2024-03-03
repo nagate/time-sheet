@@ -34,6 +34,7 @@ export interface DatetimeUtil {
   getFormattedDate(date: Date): string;
   // 時刻をフォーマットして文字列に変換する
   getFormattedTime(date: Date): string;
+  createMonthDates(year: number, month: number): Date[];
 }
 
 const WEEKS = ["日", "月", "火", "水", "木", "金", "土"];
@@ -157,6 +158,22 @@ const datetimeUtil: DatetimeUtil = {
     };
     // 時刻をフォーマット
     return date.toLocaleTimeString("ja-JP", options);
+  },
+  createMonthDates(year: number, month: number): Date[] {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    // const days = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    const days =
+      Math.floor(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+      ) + 1;
+    const dates: Date[] = [];
+    for (let i = 0; i < days; i++) {
+      dates.push(
+        new Date(startDate.getFullYear(), startDate.getMonth(), i + 1)
+      );
+    }
+    return dates;
   },
 };
 
