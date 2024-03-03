@@ -3,7 +3,9 @@ import * as React from "react";
 import Box from "@mui/material/Box";
 import {
   DataGrid,
+  GridActionsCellItem,
   GridColDef,
+  GridRowParams,
   GridValueFormatterParams,
 } from "@mui/x-data-grid";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +15,7 @@ import {
   insertMonthTimeSheet,
 } from "@/services/timeSheetService";
 import { TimeSheet } from "@/types/timeSheetType";
+import { Delete } from "@mui/icons-material";
 
 const columns: GridColDef[] = [
   {
@@ -70,7 +73,41 @@ const columns: GridColDef[] = [
     width: 40,
     sortable: false,
   },
+  {
+    field: "actions",
+    headerName: "操作",
+    type: "actions",
+    width: 40,
+    sortable: false,
+    getActions: (params: GridRowParams) => [
+      <GridActionsCellItem
+        key={0}
+        icon={<Delete />}
+        onClick={handleClickDelete}
+        label="詳細確認"
+        showInMenu
+      />,
+      <GridActionsCellItem
+        key={1}
+        icon={<Delete />}
+        onClick={handleClickDelete}
+        label="編集"
+        showInMenu
+      />,
+      <GridActionsCellItem
+        key={2}
+        icon={<Delete />}
+        onClick={handleClickDelete}
+        label="削除"
+        showInMenu
+      />,
+    ],
+  },
 ];
+
+const handleClickDelete = () => {
+  console.log("delete");
+};
 
 export default function TimeSheetsPage() {
   const thisYear = useRef<string>(

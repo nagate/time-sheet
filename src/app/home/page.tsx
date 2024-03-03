@@ -116,6 +116,7 @@ export default function HomePage() {
       } else {
         // まだデータがない場合は作成
         // TODO: １ヶ月分を作成
+        // TODO: redux + 永続化（indexedDBに変更する？）
         insertMonthTimeSheet(
           Number(
             datetimeUtil.getFormattedDatetime({
