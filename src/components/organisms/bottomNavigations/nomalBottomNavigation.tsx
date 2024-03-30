@@ -28,7 +28,7 @@ export default function NormalBottomNavigation() {
     } else if (value === INDEX_LIST) {
       router.push("/time-sheets");
     } else if (value === INDEX_SETTINGS) {
-      router.push("/time-sheets");
+      router.push("/settings/list");
     }
   };
 
