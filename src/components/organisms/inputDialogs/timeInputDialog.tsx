@@ -1,14 +1,19 @@
 import * as React from "react";
 import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import { useEffect, useState } from "react";
+import {
+  PickerChangeHandlerContext,
+  TimePicker,
+  TimeValidationError,
+} from "@mui/x-date-pickers";
+import { Dayjs } from "dayjs";
 
-export default function NumberInputDialog({
+export default function TimeInputDialog({
   name,
   title,
   open,
@@ -18,10 +23,10 @@ export default function NumberInputDialog({
   name: string;
   title: string;
   open: boolean;
-  onClickClose: (value: number | null, cancel: boolean) => void;
-  value: number;
+  onClickClose: (value: Dayjs | null, cancel: boolean) => void;
+  value: Dayjs | null;
 }) {
-  const [val, setVal] = useState<number | null>(value);
+  const [val, setVal] = useState<Dayjs | null>(value);
 
   useEffect(() => {
     setVal(value);
@@ -35,13 +40,11 @@ export default function NumberInputDialog({
     onClickClose(value, true);
   };
 
-  const handeleChangeValue = (ev: React.ChangeEvent<HTMLInputElement>) => {
-    const _val = ev.currentTarget.value;
-    if (Number.isNaN(_val) || _val === "") {
-      setVal(null);
-      return;
-    }
-    setVal(Number(_val));
+  const handeleChangeValue = (
+    value: Dayjs | null,
+    context: PickerChangeHandlerContext<TimeValidationError>
+  ) => {
+    setVal(value);
   };
 
   return (
@@ -49,14 +52,10 @@ export default function NumberInputDialog({
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>{title}を入力する</DialogContentText>
-        <TextField
+        <TimePicker
           autoFocus
-          margin="dense"
           name={name}
-          type="number"
-          fullWidth
-          variant="standard"
-          value={val ?? ""}
+          value={val}
           onChange={handeleChangeValue}
         />
       </DialogContent>

@@ -128,6 +128,7 @@ export default function TimeSheetsPage() {
   const [timeSheets, setTimeSheets] = useState<TimeSheet[]>([]);
 
   useEffect(() => {
+    // TODO: Dexieに変更
     const getData = async () => {
       getTimeSheetByYearMonth(`${thisYear.current}${thisMonth.current}`).then(
         (data) => {

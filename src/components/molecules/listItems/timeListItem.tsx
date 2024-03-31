@@ -7,7 +7,9 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import NumberInputDialog from "@/components/organisms/inputDialogs/numberInputDialog";
+import TimeInputDialog from "@/components/organisms/inputDialogs/timeInputDialog";
+import { Dayjs } from "dayjs";
+import datetimeUtil from "@/utils/datetime";
 
 const StyledListItemButton = styled(ListItemButton)({
   display: "flex",
@@ -33,22 +35,22 @@ const NextIcon = styled(ListItemIcon)({
   minWidth: 40,
 });
 
-export default function NumberListItem({
+export default function TimeListItem({
   name,
   title,
   value,
-  unitName = "",
+  format = "HH:mm",
   selected = false,
   onClick = () => {},
   onClickOk,
 }: {
   name: string;
   title: string;
-  value: number;
-  unitName?: string;
+  value: Dayjs | null;
+  format?: string;
   selected?: boolean;
   onClick?: () => void;
-  onClickOk: (value: number) => void;
+  onClickOk: (value: Dayjs | null) => void;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -57,10 +59,17 @@ export default function NumberListItem({
     setOpen(true);
   };
 
-  const handleClose = (val: number | null, cancel: boolean) => {
+  const handleClose = (val: Dayjs | null, cancel: boolean) => {
     setOpen(false);
     if (cancel) return;
-    onClickOk(val ?? 0);
+    onClickOk(val);
+  };
+
+  const formatDatetime = (v: Dayjs | null) => {
+    return datetimeUtil.getFormattedDatetime({
+      date: v?.toDate() ?? new Date(),
+      format: format,
+    });
   };
 
   return (
@@ -68,19 +77,19 @@ export default function NumberListItem({
       <StyledListItemButton selected={selected} onClick={handleClick}>
         <Label>
           <ListItemText primary={title} />
-          <Value primary={`${value}${unitName}`} />
+          <Value primary={formatDatetime(value)} />
         </Label>
         <NextIcon>
           <NavigateNextIcon />
         </NextIcon>
       </StyledListItemButton>
-      <NumberInputDialog
+      <TimeInputDialog
         name={name}
         title={title}
         value={value}
         open={open}
         onClickClose={handleClose}
-      ></NumberInputDialog>
+      ></TimeInputDialog>
     </>
   );
 }
