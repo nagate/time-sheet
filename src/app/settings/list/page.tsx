@@ -8,12 +8,12 @@ import {
 } from "@mui/material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import NumberInputDialog from "@/components/organisms/inputDialogs/numberInputDialog";
+import NumberListItem from "@/components/molecules/listItems/numberListItem";
 
 export default function SettingsListPage() {
   const [selectedIndex, setSelectedIndex] = useState(1);
-  const [openNumber, setOpenNumber] = useState(false);
   const [hourlyPay, setHourlyPay] = useState<number>(850);
+  const [breakTime, setBreakTime] = useState<number>(60);
 
   const handleListItemClick = (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>,
@@ -22,47 +22,38 @@ export default function SettingsListPage() {
     setSelectedIndex(index);
   };
 
-  const handleClickHourlyPay = () => {
-    console.log("handleClickHourlyPay");
-    setSelectedIndex(0);
-    setOpenNumber(true);
+  const handleCloseHourlyPay = (value: number) => {
+    setSelectedIndex(-1);
+    setHourlyPay(value);
   };
 
-  const handleCloseHourlyPay = (value: number, cancel: boolean) => {
-    console.log(value);
+  const handleCloseBreakTime = (value: number) => {
     setSelectedIndex(-1);
-    setOpenNumber(false);
-
-    if (cancel) return;
-    setHourlyPay(value);
+    setBreakTime(value);
   };
 
   return (
     <>
       <List component="nav" aria-label="main mailbox folders">
-        <ListItemButton
+        <NumberListItem
+          name={"hourlyPay"}
+          title={"時給"}
+          value={hourlyPay}
+          unitName={"円"}
           selected={selectedIndex === 0}
-          onClick={handleClickHourlyPay}
-        >
-          <ListItemText primary="時給" />
-          <ListItemText primary={`${hourlyPay}円`} />
-          <ListItemIcon>
-            <NavigateNextIcon />
-          </ListItemIcon>
-        </ListItemButton>
+          onClose={handleCloseHourlyPay}
+        ></NumberListItem>
       </List>
       <Divider />
       <List component="nav" aria-label="secondary mailbox folder">
-        <ListItemButton
+        <NumberListItem
+          name={"breakTime"}
+          title={"休憩"}
+          value={breakTime}
+          unitName={"分"}
           selected={selectedIndex === 1}
-          onClick={(event) => handleListItemClick(event, 1)}
-        >
-          <ListItemText primary="休憩" />
-          <ListItemText primary="60分" />
-          <ListItemIcon>
-            <NavigateNextIcon />
-          </ListItemIcon>
-        </ListItemButton>
+          onClose={handleCloseBreakTime}
+        ></NumberListItem>
         <ListItemButton
           selected={selectedIndex === 2}
           onClick={(event) => handleListItemClick(event, 2)}
@@ -84,12 +75,6 @@ export default function SettingsListPage() {
           </ListItemIcon>
         </ListItemButton>
       </List>
-      <NumberInputDialog
-        title={"時給"}
-        value={hourlyPay}
-        open={openNumber}
-        onClickClose={handleCloseHourlyPay}
-      ></NumberInputDialog>
     </>
   );
 }

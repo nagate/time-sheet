@@ -6,14 +6,16 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import { MouseEventHandler, useState } from "react";
+import { useState } from "react";
 
 export default function NumberInputDialog({
+  name,
   title,
   open,
   onClickClose,
   value,
 }: {
+  name: string;
   title: string;
   open: boolean;
   onClickClose: (value: number, cancel: boolean) => void;
@@ -21,9 +23,7 @@ export default function NumberInputDialog({
 }) {
   const [val, setVal] = useState<number>(value);
 
-  const handleClickOk = (
-    ev: React.MouseEvent<HTMLButtonElement, MouseEvent>
-  ) => {
+  const handleClickOk = () => {
     onClickClose(val, false);
   };
 
@@ -42,11 +42,8 @@ export default function NumberInputDialog({
         <DialogContentText>{title}を入力する</DialogContentText>
         <TextField
           autoFocus
-          //   required
           margin="dense"
-          //   id="name"
-          name="email"
-          //   label="Email Address"
+          name={name}
           type="number"
           fullWidth
           variant="standard"
@@ -56,7 +53,7 @@ export default function NumberInputDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={(ev) => handleClickOk(ev)}>OK</Button>
+        <Button onClick={handleClickOk}>OK</Button>
       </DialogActions>
     </Dialog>
   );
