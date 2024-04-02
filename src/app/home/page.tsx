@@ -1,16 +1,14 @@
 "use client";
+
 import Stamping from "@/components/atoms/stampings/stamping";
-import {
-  getTimeSheet,
-  insertMonthTimeSheet,
-  insertTimeSheet,
-  updateTimeSheet,
-} from "@/services/timeSheetService";
 import datetimeUtil from "@/utils/datetime";
 import { NumberUtil } from "@/utils/numburUtil";
 import { Delete, TimeToLeave, Work } from "@mui/icons-material";
 import { Box, Button, TextField, styled } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Settings, TimeSheets, db } from "../indexedDB/timeSheetAppDB";
+import { useLiveQuery } from "dexie-react-hooks";
+import dayjs from "dayjs";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -37,6 +35,34 @@ const Margin8Box = styled(Box)({
   margin: 8,
 });
 
+// 就業時間を計算（分）
+const getWorkTimesM = ({
+  endTime,
+  startTime,
+  breakTime,
+}: {
+  endTime: Date | null | undefined;
+  startTime: Date | null | undefined;
+  breakTime: number | undefined;
+}): number => {
+  // 出勤日未入力の場合
+  if (!startTime) return 0;
+
+  // 秒は切り捨て、分単位で計算
+  const s = datetimeUtil.truncateSeconds(startTime);
+  // 退勤日未入力の場合、現在日時で計算
+  const e = datetimeUtil.truncateSeconds(endTime ?? new Date());
+
+  // マイナスを考慮に入れる→マイナスの場合は0にする
+  let diffTime = datetimeUtil.subtractTime(s, e);
+  diffTime = diffTime < 0 ? 0 : diffTime / (1000 * 60) - (breakTime ?? 0);
+  const diffMinutes = NumberUtil.truncate(diffTime);
+  // 出勤時間がマイナスの場合
+  if (diffMinutes < 0) return 0;
+
+  return diffMinutes;
+};
+
 // 就業時間を計算
 const getWorkTImes = ({
   endTime,
@@ -49,7 +75,7 @@ const getWorkTImes = ({
 }): string => {
   if (!startTime) {
     // 出勤日未入力の場合
-    return `00:00`;
+    return INIT_WORK_TIMES;
   }
 
   // 秒は切り捨て、分単位で計算
@@ -64,7 +90,7 @@ const getWorkTImes = ({
 
   if (diffMinutes < 0) {
     // 出勤時間がマイナスの場合
-    return `00:00`;
+    return INIT_WORK_TIMES;
   }
   const hours = NumberUtil.truncate(diffMinutes / 60);
   const minutes = diffMinutes % 60;
@@ -76,19 +102,38 @@ const getWorkTImes = ({
   return `${formattedHours}:${formattedMinutes}`;
 };
 
+const INIT_BREAK_TIME = 0;
+const INIT_WORK_TIMES = "00:00";
+// 現時点では固定
+const SETTING_ID = 1;
+
 export default function HomePage() {
-  const today = useRef<string>(
+  const [id, setId] = useState<Date>(dayjs().startOf("day").toDate());
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
+  const [workTime, setWorkTime] = useState<string>(INIT_WORK_TIMES);
+
+  const thisYear = useRef<string>(
     datetimeUtil.getFormattedDatetime({
       date: new Date(),
-      format: "yyyyMMdd",
+      format: "yyyy",
       zeroFilled: true,
     })
   );
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [startTime, setStartTime] = useState<Date | null>(null);
-  const [endTime, setEndTime] = useState<Date | null>(null);
-  const [workTime, setWorkTime] = useState<string>("00:00");
-  const [breakTime, setBreakTime] = useState<number>(60);
+  const thisMonth = useRef<string>(
+    datetimeUtil.getFormattedDatetime({
+      date: new Date(),
+      format: "MM",
+      zeroFilled: true,
+    })
+  );
+
+  const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
+    return await db.timeSheets.where("id").equals(id).first();
+  }, [id]);
+
+  const settings: Settings | undefined = useLiveQuery(async () => {
+    return await db.settings.get(SETTING_ID);
+  }, []);
 
   useEffect(() => {
     // 1秒おきに日付を更新
@@ -100,104 +145,116 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const et = endTime || currentTime;
-    setWorkTime(getWorkTImes({ endTime: et, startTime, breakTime }));
-  }, [endTime, currentTime, startTime, breakTime]);
+    const et = timeSheets?.endWorkTime || currentTime;
+    setWorkTime(
+      getWorkTImes({
+        endTime: et,
+        startTime: timeSheets?.startWorkTime ?? null,
+        breakTime: timeSheets?.breakTime ?? INIT_BREAK_TIME,
+      })
+    );
+  }, [
+    timeSheets?.endWorkTime,
+    currentTime,
+    timeSheets?.breakTime,
+    timeSheets?.startWorkTime,
+  ]);
 
   useEffect(() => {
-    const getData = async () => {
-      const result = await getTimeSheet(today.current);
-      console.log(result);
-      if (result) {
-        const { id, startTime, endTime, breakTime } = result;
-        startTime && setStartTime(startTime);
-        endTime && setEndTime(endTime);
-        setBreakTime(breakTime);
-      } else {
-        // まだデータがない場合は作成
-        // TODO: １ヶ月分を作成
-        // TODO: redux + 永続化（indexedDBに変更する？）
-        insertMonthTimeSheet(
-          Number(
-            datetimeUtil.getFormattedDatetime({
-              date: new Date(),
-              format: "yyyy",
-              zeroFilled: true,
-            })
-          ),
-          Number(
-            datetimeUtil.getFormattedDatetime({
-              date: new Date(),
-              format: "MM",
-              zeroFilled: true,
-            })
-          )
-        );
+    // 情報を取得
+    // TODO: サービス側に実装を移行する
+    // TODO: トランザクションを貼る
+    (async () => {
+      let data = await db.timeSheets.where("id").equals(id).first();
+      // すでに作成済みの場合は実行させない
+      if (data !== undefined) return;
 
-        // insertTimeSheet({
-        //   id: today.current,
-        //   date: new Date(),
-        //   breakTime: 0,
-        // });
+      // 存在しない場合はデータを作成
+      const countDays = datetimeUtil.getDaysInMonth(
+        Number(thisYear.current),
+        Number(thisMonth.current)
+      );
+
+      const dates: TimeSheets[] = [];
+      const now = new Date();
+      for (let i = 0; i < countDays; i++) {
+        dates.push({
+          id: dayjs()
+            .year(Number(thisYear.current))
+            .month(Number(thisMonth.current) - 1)
+            .day(i + 1)
+            .startOf("day")
+            .toDate(),
+          yearMonth: `${thisYear.current}${thisMonth.current}`,
+          breakTime: INIT_BREAK_TIME,
+          startWorkTime: null,
+          endWorkTime: null,
+          localUpdatedAt: now,
+        });
       }
-    };
 
-    getData();
-  }, []);
+      data = await db.timeSheets.where("id").equals(id).first();
+      // すでに作成済みの場合は実行させない
+      if (data !== undefined) return;
+      await db.timeSheets.bulkAdd(dates);
+    })();
+  }, [id, timeSheets]);
+
+  const updateTimeSheetsIndexedDB = async (values: TimeSheets) => {
+    try {
+      // TODO: サービス側に実装を移行する
+      // TODO: 値に変更がなければ、更新させない
+      await db.timeSheets.put({
+        ...values,
+        id,
+        localUpdatedAt: new Date(),
+      });
+    } catch (error) {
+      throw error;
+    }
+  };
 
   // 出勤
   const handleClickStart = () => {
-    const s = new Date();
-    setStartTime(s);
-    updateTimeSheet({
-      id: today.current,
-      date: new Date(),
-      startTime: s,
-      endTime: endTime ?? undefined,
-      breakTime,
+    if (timeSheets === undefined) return;
+    updateTimeSheetsIndexedDB({
+      ...timeSheets,
+      startWorkTime: new Date(),
     });
   };
 
   // 退勤
   const handleClickEnd = () => {
-    const e = new Date();
-
-    setEndTime(e);
-    updateTimeSheet({
-      id: today.current,
-      date: new Date(),
-      startTime: startTime ?? undefined,
-      endTime: e,
-      breakTime,
+    if (timeSheets === undefined) return;
+    updateTimeSheetsIndexedDB({
+      ...timeSheets,
+      endWorkTime: new Date(),
     });
   };
 
   // 休憩
   const handleChangeBreakTime = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBreakTime(Number(e.target.value));
-    updateTimeSheet({
-      id: today.current,
-      date: new Date(),
-      startTime: startTime ?? undefined,
-      endTime: endTime ?? undefined,
-      breakTime,
+    const _val = e.target.value;
+    let _breakTime = Number.isNaN(_val) || _val === "" ? 0 : Number(_val);
+
+    if (timeSheets === undefined) return;
+    updateTimeSheetsIndexedDB({
+      ...timeSheets,
+      breakTime: _breakTime,
     });
   };
 
   // 削除
   const handleClickDelete = () => {
     // TODO: 確認ダイアログを表示する
-    setStartTime(null);
-    setEndTime(null);
-    setWorkTime("00:00");
-    setBreakTime(60);
-    updateTimeSheet({
-      id: today.current,
-      date: new Date(),
-      startTime: undefined,
-      endTime: undefined,
-      breakTime: 60,
+    if (timeSheets === undefined) return;
+    updateTimeSheetsIndexedDB({
+      ...timeSheets,
+      startWorkTime: null,
+      endWorkTime: null,
+      breakTime: 0,
     });
+    setWorkTime(INIT_WORK_TIMES);
   };
 
   return (
@@ -220,7 +277,7 @@ export default function HomePage() {
       </TodayBox>
       <Margin8Box>
         <StyledStamping
-          date={startTime}
+          date={timeSheets?.startWorkTime ?? null}
           text={"出勤"}
           onClick={handleClickStart}
           startIcon={<Work />}
@@ -228,7 +285,7 @@ export default function HomePage() {
       </Margin8Box>
       <Margin8Box>
         <StyledStamping
-          date={endTime}
+          date={timeSheets?.endWorkTime ?? null}
           text={"退勤"}
           onClick={handleClickEnd}
           startIcon={<TimeToLeave />}
@@ -239,13 +296,22 @@ export default function HomePage() {
         type="number"
         label="休憩時間（分）"
         variant="outlined"
-        value={breakTime}
+        value={timeSheets?.breakTime ?? null}
         onChange={handleChangeBreakTime}
       />
       <div>就業時間</div>
       <div>{workTime}</div>
       <div>給料</div>
-      <div>¥5,300</div>
+      <div>
+        ¥
+        {(settings?.hourlyPay ?? 0) *
+          (getWorkTimesM({
+            startTime: timeSheets?.startWorkTime,
+            endTime: timeSheets?.endWorkTime,
+            breakTime: timeSheets?.breakTime,
+          }) /
+            60)}
+      </div>
       <Button
         variant="outlined"
         startIcon={<Delete />}

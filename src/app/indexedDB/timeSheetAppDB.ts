@@ -1,5 +1,8 @@
 import Dexie, { Table } from "dexie";
 
+const DB_NAME = "timeSheetApp";
+const VERSION = 1;
+
 export interface Settings {
   id?: number;
   hourlyPay: number;
@@ -10,9 +13,8 @@ export interface Settings {
 }
 
 export interface TimeSheets {
-  // id: string;
   // unique key
-  day: Date;
+  id: Date;
   // 検索効率化用
   yearMonth: string;
   breakTime: number;
@@ -26,11 +28,10 @@ export class TimeSheetAppDexie extends Dexie {
   timeSheets!: Table<TimeSheets>;
 
   constructor() {
-    super("timeSheetApp");
-    this.version(1).stores({
-      // settings: "++id, name, age", // Primary key and indexed props
+    super(DB_NAME);
+    this.version(VERSION).stores({
       settings: "++id",
-      timeSheets: "&day, yearMonth",
+      timeSheets: "&id, yearMonth",
     });
   }
 }

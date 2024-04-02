@@ -5,7 +5,6 @@ import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import dayjs, { Dayjs } from "dayjs";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
 import { Settings, db } from "@/app/indexedDB/timeSheetAppDB";
-import { useLiveQuery } from "dexie-react-hooks";
 
 const INDEX = {
   HOURLY_PAY: 1,
@@ -28,11 +27,6 @@ export default function SettingsListPage() {
     dayjs().hour(18).minute(0)
   );
 
-  // const settings: Settings = useLiveQuery(async () => {
-  //   // return await db.settings.where("id").equals(SETTING_ID).first();
-  //   return await db.settings.get(SETTING_ID);
-  // }, []);
-
   useEffect(() => {
     // 以下の対応
     // 「ストリクトモード」で実行すると、安全でない副作用を洗い出すために、React は意図的にコンポーネントを二重レンダリングします。
@@ -44,8 +38,6 @@ export default function SettingsListPage() {
     (async () => {
       const _s = await db.settings.get(settingId);
       if (_s) {
-        console.log("aaa");
-        console.log(_s);
         // すでに作成済みの場合は実行させない
         setHourlyPay(_s.hourlyPay);
         setBreakTime(_s.breakTime);
@@ -96,7 +88,6 @@ export default function SettingsListPage() {
 
   // 時給
   const handleCloseHourlyPay = async (value: number) => {
-    // setSelectedIndex(-1);
     await updateSettingsIndexedDB({
       hourlyPay: value,
       breakTime,
@@ -108,7 +99,6 @@ export default function SettingsListPage() {
 
   // 休憩時間
   const handleCloseBreakTime = async (value: number) => {
-    // setSelectedIndex(-1);
     await updateSettingsIndexedDB({
       hourlyPay,
       breakTime: value,
@@ -120,7 +110,6 @@ export default function SettingsListPage() {
 
   // 出勤時間
   const handleOkStartWorkTime = async (value: Dayjs | null) => {
-    // setSelectedIndex(-1);
     await updateSettingsIndexedDB({
       hourlyPay,
       breakTime,
@@ -132,7 +121,6 @@ export default function SettingsListPage() {
 
   // 退勤時間
   const handleOkEndWorkTime = async (value: Dayjs | null) => {
-    // setSelectedIndex(-1);
     await updateSettingsIndexedDB({
       hourlyPay,
       breakTime,

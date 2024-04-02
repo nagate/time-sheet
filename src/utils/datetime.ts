@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+
 // インターフェース：DatetimeUtil
 export interface DatetimeUtil {
   // 現在の年月日を取得する
@@ -40,7 +42,7 @@ export interface DatetimeUtil {
 const WEEKS = ["日", "月", "火", "水", "木", "金", "土"];
 
 // DatetimeUtilの実装
-const datetimeUtil: DatetimeUtil = {
+const datetimeUtil = {
   // 現在の年月日を取得する
   getToday(): string {
     const now = new Date();
@@ -161,19 +163,26 @@ const datetimeUtil: DatetimeUtil = {
   },
   createMonthDates(year: number, month: number): Date[] {
     const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0);
-    // const days = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-    const days =
-      Math.floor(
-        (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1;
+    const countDays = datetimeUtil.getDaysInMonth(year, month);
+
     const dates: Date[] = [];
-    for (let i = 0; i < days; i++) {
+    for (let i = 0; i < countDays; i++) {
       dates.push(
         new Date(startDate.getFullYear(), startDate.getMonth(), i + 1)
       );
     }
     return dates;
+  },
+  // Get the number of days in the month.
+  getDaysInMonth(year: number, month: number): number {
+    if (!(1 <= month || month <= 12)) {
+      // TODO:
+      // throw new Exception();
+    }
+    return dayjs()
+      .year(year)
+      .month(month - 1)
+      .daysInMonth();
   },
 };
 

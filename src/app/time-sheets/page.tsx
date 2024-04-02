@@ -1,4 +1,5 @@
 "use client";
+
 import * as React from "react";
 import Box from "@mui/material/Box";
 import {
@@ -8,18 +9,15 @@ import {
   GridRowParams,
   GridValueFormatterParams,
 } from "@mui/x-data-grid";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import datetimeUtil from "@/utils/datetime";
-import {
-  getTimeSheetByYearMonth,
-  insertMonthTimeSheet,
-} from "@/services/timeSheetService";
-import { TimeSheet } from "@/types/timeSheetType";
 import { Delete } from "@mui/icons-material";
+import { TimeSheets, db } from "../indexedDB/timeSheetAppDB";
+import { useLiveQuery } from "dexie-react-hooks";
 
 const columns: GridColDef[] = [
   {
-    field: "date",
+    field: "id",
     headerName: "日付",
     width: 80,
     sortable: false,
@@ -35,7 +33,7 @@ const columns: GridColDef[] = [
     },
   },
   {
-    field: "startTime",
+    field: "startWorkTime",
     headerName: "出勤",
     width: 60,
     sortable: false,
@@ -51,7 +49,7 @@ const columns: GridColDef[] = [
     },
   },
   {
-    field: "endTime",
+    field: "endWorkTime",
     headerName: "退勤",
     width: 60,
     sortable: false,
@@ -125,50 +123,62 @@ export default function TimeSheetsPage() {
     })
   );
 
-  const [timeSheets, setTimeSheets] = useState<TimeSheet[]>([]);
+  const timeSheets: TimeSheets[] | undefined = useLiveQuery(async () => {
+    return await db.timeSheets
+      .where("yearMonth")
+      .equals(`${thisYear.current}${thisMonth.current}`)
+      .toArray();
+  }, [`${thisYear.current}${thisMonth.current}`]);
 
   useEffect(() => {
-    // TODO: Dexieに変更
-    const getData = async () => {
-      getTimeSheetByYearMonth(`${thisYear.current}${thisMonth.current}`).then(
-        (data) => {
-          console.table(data);
-          setTimeSheets(data);
-          if (data.length === 0) {
-            // データ作成
-            insertMonthTimeSheet(
-              Number(thisYear.current),
-              Number(thisMonth.current)
-            ).then(() => {
-              getTimeSheetByYearMonth(
-                `${thisYear.current}${thisMonth.current}`
-              ).then((data) => {
-                console.table(data);
-                setTimeSheets(data);
-              });
-            });
-          }
-        }
-      );
-    };
+    // 取得できていない場合は処理しない
+    if (timeSheets === undefined) return;
 
-    getData();
-  }, []);
+    // 情報を取得
+    // TODO: サービス側に実装を移行する
+    (async () => {
+      // すでに作成済みの場合は実行させない
+      if (timeSheets.length > 0) return;
+
+      // 存在しない場合はデータを作成
+      const countDays = datetimeUtil.getDaysInMonth(
+        Number(thisYear.current),
+        Number(thisMonth.current)
+      );
+
+      const dates: TimeSheets[] = [];
+      const now = new Date();
+      for (let i = 0; i < countDays; i++) {
+        dates.push({
+          id: new Date(
+            Number(thisYear.current),
+            Number(thisMonth.current),
+            i + 1
+          ),
+          yearMonth: `${thisYear.current}${thisMonth.current}`,
+          breakTime: 0,
+          startWorkTime: null,
+          endWorkTime: null,
+          localUpdatedAt: now,
+        });
+      }
+
+      await db.timeSheets.bulkAdd(dates);
+    })();
+  }, [timeSheets]);
+
   return (
     <Box sx={{ height: 500, width: "100%" }}>
       <Box>{`${thisYear.current}/${thisMonth.current}`}</Box>
       <DataGrid
-        rows={timeSheets}
+        rows={timeSheets ?? []}
         columns={columns}
-        loading={timeSheets.length === 0}
+        loading={(timeSheets?.length ?? 0) === 0}
         columnHeaderHeight={32}
         rowHeight={40}
-        // autoHeight
         disableColumnFilter
         disableColumnMenu
-        // hideFooterPagination
         hideFooter
-        // autoPageSize
       />
     </Box>
   );
