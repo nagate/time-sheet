@@ -8,12 +8,14 @@ import {
 import React, { useState } from "react";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NumberInputDialog from "@/components/organisms/inputDialogs/numberInputDialog";
+import EditIcon from "@mui/icons-material/Edit";
 
 const StyledListItemButton = styled(ListItemButton)({
   display: "flex",
   flexDirection: "row",
   justifyContent: "space-between",
   width: "100%",
+  border: `1px solid rgba(25, 118, 210, 0.5)`,
 });
 
 const Label = styled("div")({
@@ -33,16 +35,15 @@ const NextIcon = styled(ListItemIcon)({
   minWidth: 40,
 });
 
-export default function NumberListItem({
+export default function NumberInputButton({
   name,
   title,
   value,
   unitName = "",
   endIcon = <NavigateNextIcon />,
   selected = false,
-  readOnly = false,
   onClick = () => {},
-  onClickOk = () => {},
+  onClickOk,
 }: {
   name: string;
   title: string;
@@ -50,15 +51,13 @@ export default function NumberListItem({
   unitName?: string;
   endIcon?: React.ReactNode;
   selected?: boolean;
-  readOnly?: boolean;
   onClick?: () => void;
-  onClickOk?: (value: number) => void;
+  onClickOk: (value: number) => void;
 }) {
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
     onClick();
-    if (readOnly) return;
     setOpen(true);
   };
 
@@ -75,7 +74,7 @@ export default function NumberListItem({
           <ListItemText primary={title} />
           <Value primary={`${value}${unitName}`} />
         </Label>
-        <NextIcon>{endIcon} </NextIcon>
+        <EditIcon>{endIcon}</EditIcon>
       </StyledListItemButton>
       <NumberInputDialog
         name={name}

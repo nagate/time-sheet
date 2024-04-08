@@ -40,22 +40,27 @@ export default function TimeListItem({
   title,
   value,
   format = "HH:mm",
+  endIcon = <NavigateNextIcon />,
   selected = false,
+  readOnly = false,
   onClick = () => {},
-  onClickOk,
+  onClickOk = () => {},
 }: {
   name: string;
   title: string;
   value: Dayjs | null;
   format?: string;
+  endIcon?: React.ReactNode;
   selected?: boolean;
+  readOnly?: boolean;
   onClick?: () => void;
-  onClickOk: (value: Dayjs | null) => void;
+  onClickOk?: (value: Dayjs | null) => void;
 }) {
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
     onClick();
+    if (readOnly) return;
     setOpen(true);
   };
 
@@ -79,9 +84,7 @@ export default function TimeListItem({
           <ListItemText primary={title} />
           <Value primary={formatDatetime(value)} />
         </Label>
-        <NextIcon>
-          <NavigateNextIcon />
-        </NextIcon>
+        <NextIcon>{endIcon} </NextIcon>
       </StyledListItemButton>
       <TimeInputDialog
         name={name}

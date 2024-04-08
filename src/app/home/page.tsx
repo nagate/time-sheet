@@ -3,12 +3,16 @@
 import Stamping from "@/components/atoms/stampings/stamping";
 import datetimeUtil from "@/utils/datetime";
 import { NumberUtil } from "@/utils/numburUtil";
-import { Delete, TimeToLeave, Work } from "@mui/icons-material";
-import { Box, Button, TextField, styled } from "@mui/material";
+import { Delete, Edit, TimeToLeave, Work } from "@mui/icons-material";
+import { Box, Button, List, styled } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
 import { Settings, TimeSheets, db } from "../indexedDB/timeSheetAppDB";
 import { useLiveQuery } from "dexie-react-hooks";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
+import NumberListItem from "@/components/molecules/listItems/numberListItem";
+import EditIcon from "@mui/icons-material/Edit";
+import TimeListItem from "@/components/molecules/listItems/timeListItem";
+import InformationDialog from "@/components/organisms/dialogs/informationDialog";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -25,15 +29,21 @@ const TimeBox = styled(Box)({
   fontSize: 50,
 });
 
-const StyledStamping = styled(Stamping)({
-  // TODO: 効かない?
-  margin: 16,
-  padding: 16,
+const UtilArea = styled(Box)({
+  display: "flex",
+  columnGap: 16,
+  padding: 8,
+  backgroundColor: "rgba(25, 118, 210, 0.04)",
 });
 
-const Margin8Box = styled(Box)({
-  margin: 8,
+const StampingArea = styled(Box)({
+  display: "flex",
+  justifyContent: "space-between",
+  columnGap: 8,
+  padding: 8,
 });
+
+const StyledStamping = styled(Stamping)({});
 
 // 就業時間を計算（分）
 const getWorkTimesM = ({
@@ -72,34 +82,9 @@ const getWorkTImes = ({
   endTime: Date | null;
   startTime: Date | null;
   breakTime: number;
-}): string => {
-  if (!startTime) {
-    // 出勤日未入力の場合
-    return INIT_WORK_TIMES;
-  }
-
-  // 秒は切り捨て、分単位で計算
-  const s = datetimeUtil.truncateSeconds(startTime);
-  // 退勤日未入力の場合、現在日時で計算
-  const e = datetimeUtil.truncateSeconds(endTime ?? new Date());
-
-  // マイナスを考慮に入れる→マイナスの場合は0にする
-  let diffTime = datetimeUtil.subtractTime(s, e);
-  diffTime = diffTime < 0 ? 0 : diffTime / (1000 * 60) - breakTime;
-  const diffMinutes = NumberUtil.truncate(diffTime);
-
-  if (diffMinutes < 0) {
-    // 出勤時間がマイナスの場合
-    return INIT_WORK_TIMES;
-  }
-  const hours = NumberUtil.truncate(diffMinutes / 60);
-  const minutes = diffMinutes % 60;
-
-  // 2桁の文字列に変換
-  const formattedHours = NumberUtil.toTwoDigits(hours);
-  const formattedMinutes = NumberUtil.toTwoDigits(minutes);
-
-  return `${formattedHours}:${formattedMinutes}`;
+}): Dayjs | null => {
+  const diffMinutes = getWorkTimesM({ endTime, startTime, breakTime });
+  return dayjs().startOf("day").add(diffMinutes, "m");
 };
 
 const INIT_BREAK_TIME = 0;
@@ -110,7 +95,8 @@ const SETTING_ID = 1;
 export default function HomePage() {
   const [id, setId] = useState<Date>(dayjs().startOf("day").toDate());
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
-  const [workTime, setWorkTime] = useState<string>(INIT_WORK_TIMES);
+  const [workTime, setWorkTime] = useState<Dayjs | null>(null);
+  const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
 
   const thisYear = useRef<string>(
     datetimeUtil.getFormattedDatetime({
@@ -233,20 +219,23 @@ export default function HomePage() {
   };
 
   // 休憩
-  const handleChangeBreakTime = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const _val = e.target.value;
-    let _breakTime = Number.isNaN(_val) || _val === "" ? 0 : Number(_val);
-
+  const handleChangeBreakTime = (value: number) => {
     if (timeSheets === undefined) return;
     updateTimeSheetsIndexedDB({
       ...timeSheets,
-      breakTime: _breakTime,
+      breakTime: value,
     });
   };
 
   // 削除
   const handleClickDelete = () => {
-    // TODO: 確認ダイアログを表示する
+    setOpenInfoDialog(true);
+  };
+
+  const handleCloseDeleteDialog = (cancel: boolean) => {
+    setOpenInfoDialog(false);
+    if (cancel) return;
+
     if (timeSheets === undefined) return;
     updateTimeSheetsIndexedDB({
       ...timeSheets,
@@ -254,7 +243,7 @@ export default function HomePage() {
       endWorkTime: null,
       breakTime: 0,
     });
-    setWorkTime(INIT_WORK_TIMES);
+    setWorkTime(null);
   };
 
   return (
@@ -275,50 +264,75 @@ export default function HomePage() {
           })}
         </TimeBox>
       </TodayBox>
-      <Margin8Box>
+      <UtilArea>
+        <Button
+          variant="outlined"
+          startIcon={<Delete />}
+          onClick={handleClickDelete}
+        >
+          削除
+        </Button>
+        <Button variant="outlined" startIcon={<Edit />} onClick={() => {}}>
+          編集
+        </Button>
+      </UtilArea>
+      <StampingArea>
         <StyledStamping
           date={timeSheets?.startWorkTime ?? null}
           text={"出勤"}
           onClick={handleClickStart}
+          onClickEdit={() => {}}
           startIcon={<Work />}
         ></StyledStamping>
-      </Margin8Box>
-      <Margin8Box>
         <StyledStamping
           date={timeSheets?.endWorkTime ?? null}
           text={"退勤"}
           onClick={handleClickEnd}
+          onClickEdit={() => {}}
           startIcon={<TimeToLeave />}
         ></StyledStamping>
-      </Margin8Box>
-      <TextField
-        id="break-time"
-        type="number"
-        label="休憩時間（分）"
-        variant="outlined"
-        value={timeSheets?.breakTime ?? null}
-        onChange={handleChangeBreakTime}
+      </StampingArea>
+      <List component="nav" aria-label="secondary mailbox folder">
+        <NumberListItem
+          name={"breakTime"}
+          title={"休憩時間"}
+          value={timeSheets?.breakTime ?? 0}
+          unitName={"分"}
+          endIcon={<EditIcon />}
+          onClickOk={(v) => {
+            handleChangeBreakTime(v);
+          }}
+        ></NumberListItem>
+        <TimeListItem
+          name={"workTime"}
+          title={"就業時間"}
+          value={workTime}
+          endIcon={null}
+          readOnly
+        ></TimeListItem>
+        <NumberListItem
+          name={"pay"}
+          title={"給料"}
+          value={
+            (settings?.hourlyPay ?? 0) *
+            (getWorkTimesM({
+              startTime: timeSheets?.startWorkTime,
+              endTime: timeSheets?.endWorkTime,
+              breakTime: timeSheets?.breakTime,
+            }) /
+              60)
+          }
+          unitName={"円"}
+          endIcon={null}
+          readOnly
+        ></NumberListItem>
+      </List>
+      <InformationDialog
+        title={"削除"}
+        open={openInfoDialog}
+        message={"出退勤日時、休憩時間を削除します。よろしいですか？"}
+        onClickOk={handleCloseDeleteDialog}
       />
-      <div>就業時間</div>
-      <div>{workTime}</div>
-      <div>給料</div>
-      <div>
-        ¥
-        {(settings?.hourlyPay ?? 0) *
-          (getWorkTimesM({
-            startTime: timeSheets?.startWorkTime,
-            endTime: timeSheets?.endWorkTime,
-            breakTime: timeSheets?.breakTime,
-          }) /
-            60)}
-      </div>
-      <Button
-        variant="outlined"
-        startIcon={<Delete />}
-        onClick={handleClickDelete}
-      >
-        削除
-      </Button>
     </>
   );
 }

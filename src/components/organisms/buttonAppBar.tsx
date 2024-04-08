@@ -27,7 +27,7 @@ export default function ButtonAppBar({ titleName }: { titleName: string }) {
           <Button
             color="inherit"
             onClick={() => {
-              console.log("aa");
+              console.log("ButtonAppBar");
             }}
           >
             Login

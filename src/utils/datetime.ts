@@ -115,8 +115,8 @@ const datetimeUtil = {
     zeroFilled = true,
   }: {
     date: Date;
-    format: string;
-    zeroFilled: boolean;
+    format?: string;
+    zeroFilled?: boolean;
   }): string {
     const zeroFill = zeroFilled ? "0" : "";
     let fm = format;

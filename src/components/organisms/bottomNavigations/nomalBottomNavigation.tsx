@@ -20,8 +20,6 @@ export default function NormalBottomNavigation() {
     event: React.SyntheticEvent<Element, Event>,
     value: any
   ) => {
-    console.log(event);
-    console.log(value);
     setValue(value);
     if (value === INDEX_INPUT) {
       router.push("/home");
