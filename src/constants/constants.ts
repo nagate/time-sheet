@@ -1,3 +1,4 @@
 export const CONSTANTS = {
   INIT_TIME_DISPLAY: "00:00",
+  TIME_SHEET_ID_FORMAT: "YYYYMMDD",
 } as const;

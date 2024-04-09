@@ -10,6 +10,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import TimeInputDialog from "@/components/organisms/inputDialogs/timeInputDialog";
 import { Dayjs } from "dayjs";
 import datetimeUtil from "@/utils/datetime";
+import { CONSTANTS } from "@/constants/constants";
 
 const StyledListItemButton = styled(ListItemButton)({
   display: "flex",
@@ -34,6 +35,15 @@ const NextIcon = styled(ListItemIcon)({
   justifyContent: "flex-end",
   minWidth: 40,
 });
+
+const formatDatetime = (v: Dayjs | null, format: string) => {
+  console.log(v);
+  if (!v || !v.isValid()) return CONSTANTS.INIT_TIME_DISPLAY;
+  return datetimeUtil.getFormattedDatetime({
+    date: v?.toDate(),
+    format: format,
+  });
+};
 
 export default function TimeListItem({
   name,
@@ -70,19 +80,12 @@ export default function TimeListItem({
     onClickOk(val);
   };
 
-  const formatDatetime = (v: Dayjs | null) => {
-    return datetimeUtil.getFormattedDatetime({
-      date: v?.toDate() ?? new Date(),
-      format: format,
-    });
-  };
-
   return (
     <>
       <StyledListItemButton selected={selected} onClick={handleClick}>
         <Label>
           <ListItemText primary={title} />
-          <Value primary={formatDatetime(value)} />
+          <Value primary={formatDatetime(value, format)} />
         </Label>
         <NextIcon>{endIcon} </NextIcon>
       </StyledListItemButton>

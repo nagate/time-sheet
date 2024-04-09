@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import dayjs, { Dayjs } from "dayjs";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
-import { TimeSheets, db } from "@/app/indexedDB/timeSheetAppDB";
+import { TimeSheets, db } from "@/indexedDB/timeSheetAppDB";
 import EditIcon from "@mui/icons-material/Edit";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
@@ -28,13 +28,11 @@ const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
 export default function TimeSheetEditPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const id = dayjs(searchParams.get("id"), "YYYYMMDD").toDate();
+  const id = searchParams.get("id");
 
   const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
-    console.log(id);
     if (!id) return;
     const d = await db.timeSheets.where("id").equals(id).first();
-    console.log(d);
     return await db.timeSheets.where("id").equals(id).first();
   }, [id]);
 
@@ -95,9 +93,6 @@ export default function TimeSheetEditPage() {
           name={"startWorkTime"}
           title={"出勤時間"}
           value={dayjs(timeSheets?.startWorkTime) ?? null}
-          onClick={() => {
-            // handleClickSetting(INDEX.START_WORK_TIME);
-          }}
           endIcon={<EditIcon />}
           onClickOk={handleOkStartWorkTime}
         ></TimeListItem>
@@ -106,9 +101,6 @@ export default function TimeSheetEditPage() {
           title={"退勤時間"}
           value={dayjs(timeSheets?.endWorkTime) ?? null}
           endIcon={<EditIcon />}
-          onClick={() => {
-            // handleClickSetting(INDEX.END_WORK_TIME);
-          }}
           onClickOk={handleOkEndWorkTime}
         ></TimeListItem>
         <NumberListItem
@@ -117,9 +109,6 @@ export default function TimeSheetEditPage() {
           value={timeSheets?.breakTime ?? 0}
           unitName={"分"}
           endIcon={<EditIcon />}
-          onClick={() => {
-            // handleClickSetting(INDEX.BREAK_TIME);
-          }}
           onClickOk={handleCloseBreakTime}
         ></NumberListItem>
       </List>

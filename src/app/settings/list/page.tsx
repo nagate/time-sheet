@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import dayjs, { Dayjs } from "dayjs";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
-import { Settings, db } from "@/app/indexedDB/timeSheetAppDB";
+import { Settings, db } from "@/indexedDB/timeSheetAppDB";
 
 const INDEX = {
   HOURLY_PAY: 1,

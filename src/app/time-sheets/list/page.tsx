@@ -13,33 +13,22 @@ import {
 import { useEffect, useRef, useState } from "react";
 import datetimeUtil from "@/utils/datetime";
 import { Delete } from "@mui/icons-material";
-import { TimeSheets, db } from "../../indexedDB/timeSheetAppDB";
+import { TimeSheets, db } from "../../../indexedDB/timeSheetAppDB";
 import { useLiveQuery } from "dexie-react-hooks";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import InformationDialog from "@/components/organisms/dialogs/informationDialog";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import { CONSTANTS } from "@/constants/constants";
 
 export default function TimeSheetsPage() {
   const router = useRouter();
   const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
-  const targetId = useRef<Date | null>(null);
+  const targetId = useRef<string | null>(null);
 
-  const thisYear = useRef<string>(
-    datetimeUtil.getFormattedDatetime({
-      date: new Date(),
-      format: "yyyy",
-      zeroFilled: true,
-    })
-  );
-  const thisMonth = useRef<string>(
-    datetimeUtil.getFormattedDatetime({
-      date: new Date(),
-      format: "MM",
-      zeroFilled: true,
-    })
-  );
+  const thisYear = useRef<string>(dayjs().format("YYYY"));
+  const thisMonth = useRef<string>(dayjs().format("MM"));
 
   const timeSheets: TimeSheets[] | undefined = useLiveQuery(async () => {
     return await db.timeSheets
@@ -67,12 +56,13 @@ export default function TimeSheetsPage() {
       const dates: TimeSheets[] = [];
       const now = new Date();
       for (let i = 0; i < countDays; i++) {
+        const _id = dayjs()
+          .year(Number(thisYear.current))
+          .month(Number(thisMonth.current))
+          .date(i + 1)
+          .format(CONSTANTS.TIME_SHEET_ID_FORMAT);
         dates.push({
-          id: new Date(
-            Number(thisYear.current),
-            Number(thisMonth.current),
-            i + 1
-          ),
+          id: _id,
           yearMonth: `${thisYear.current}${thisMonth.current}`,
           breakTime: 0,
           startWorkTime: null,
@@ -91,12 +81,12 @@ export default function TimeSheetsPage() {
       headerName: "日付",
       width: 80,
       sortable: false,
-      valueFormatter: (params: GridValueFormatterParams<Date>) => {
+      valueFormatter: (params: GridValueFormatterParams<string>) => {
         if (params.value == null) {
           return "";
         }
         return datetimeUtil.getFormattedDatetime({
-          date: params.value,
+          date: dayjs(params.value, CONSTANTS.TIME_SHEET_ID_FORMAT).toDate(),
           format: "dd（aaa）",
           zeroFilled: true,
         });
@@ -198,10 +188,7 @@ export default function TimeSheetsPage() {
   };
 
   const handleClickDelete = (id: GridRowId) => {
-    console.log(id);
-    console.log("delete");
-    console.log(new Date(id));
-    targetId.current = new Date(id);
+    targetId.current = id.toString();
     setOpenInfoDialog(true);
   };
 
@@ -222,8 +209,6 @@ export default function TimeSheetsPage() {
       startWorkTime: null,
       endWorkTime: null,
       breakTime: 0,
-      id: targetId.current,
-      yearMonth: "",
     });
     targetId.current = null;
   };

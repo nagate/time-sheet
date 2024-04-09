@@ -14,7 +14,7 @@ export interface Settings {
 
 export interface TimeSheets {
   // unique key
-  id: Date;
+  id: string;
   // 検索効率化用
   yearMonth: string;
   breakTime: number;

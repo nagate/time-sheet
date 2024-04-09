@@ -6,7 +6,7 @@ import { NumberUtil } from "@/utils/numburUtil";
 import { Delete, Edit, TimeToLeave, Work } from "@mui/icons-material";
 import { Box, Button, List, styled } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
-import { Settings, TimeSheets, db } from "../indexedDB/timeSheetAppDB";
+import { Settings, TimeSheets, db } from "../../indexedDB/timeSheetAppDB";
 import { useLiveQuery } from "dexie-react-hooks";
 import dayjs, { Dayjs } from "dayjs";
 import NumberListItem from "@/components/molecules/listItems/numberListItem";
@@ -14,6 +14,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
 import InformationDialog from "@/components/organisms/dialogs/informationDialog";
 import { useRouter } from "next/navigation";
+import { CONSTANTS } from "@/constants/constants";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -89,13 +90,14 @@ const getWorkTImes = ({
 };
 
 const INIT_BREAK_TIME = 0;
-const INIT_WORK_TIMES = "00:00";
 // 現時点では固定
 const SETTING_ID = 1;
 
 export default function HomePage() {
   const router = useRouter();
-  const [id, setId] = useState<Date>(dayjs().startOf("day").toDate());
+  const [id, setId] = useState<string>(
+    dayjs().format(CONSTANTS.TIME_SHEET_ID_FORMAT)
+  );
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [workTime, setWorkTime] = useState<Dayjs | null>(null);
   const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
@@ -170,9 +172,8 @@ export default function HomePage() {
           id: dayjs()
             .year(Number(thisYear.current))
             .month(Number(thisMonth.current) - 1)
-            .day(i + 1)
-            .startOf("day")
-            .toDate(),
+            .date(i + 1)
+            .format("YYYYMMDD"),
           yearMonth: `${thisYear.current}${thisMonth.current}`,
           breakTime: INIT_BREAK_TIME,
           startWorkTime: null,
@@ -255,9 +256,7 @@ export default function HomePage() {
 
   // 編集
   const handleClickEdit = () => {
-    // TODO:画面遷移する、IDを渡す
-    const strId = dayjs(id).format("YYYYMMDD");
-    router.push(`/time-sheets/edit?id=${strId}`);
+    router.push(`/time-sheets/edit?id=${id}`);
   };
 
   return (
