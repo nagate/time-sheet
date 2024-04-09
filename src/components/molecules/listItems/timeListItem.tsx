@@ -6,7 +6,6 @@ import {
   styled,
 } from "@mui/material";
 import React, { useState } from "react";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import TimeInputDialog from "@/components/organisms/inputDialogs/timeInputDialog";
 import { Dayjs } from "dayjs";
 import datetimeUtil from "@/utils/datetime";
@@ -50,7 +49,7 @@ export default function TimeListItem({
   title,
   value,
   format = "HH:mm",
-  endIcon = <NavigateNextIcon />,
+  endIcon = null,
   selected = false,
   readOnly = false,
   onClick = () => {},

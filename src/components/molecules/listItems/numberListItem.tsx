@@ -6,7 +6,6 @@ import {
   styled,
 } from "@mui/material";
 import React, { useState } from "react";
-import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import NumberInputDialog from "@/components/organisms/inputDialogs/numberInputDialog";
 
 const StyledListItemButton = styled(ListItemButton)({
@@ -38,7 +37,7 @@ export default function NumberListItem({
   title,
   value,
   unitName = "",
-  endIcon = <NavigateNextIcon />,
+  endIcon = null,
   selected = false,
   readOnly = false,
   onClick = () => {},

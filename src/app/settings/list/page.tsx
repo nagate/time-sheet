@@ -5,6 +5,7 @@ import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import dayjs, { Dayjs } from "dayjs";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
 import { Settings, db } from "@/indexedDB/timeSheetAppDB";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
 const INDEX = {
   HOURLY_PAY: 1,
@@ -138,6 +139,7 @@ export default function SettingsListPage() {
           title={"時給"}
           value={hourlyPay}
           unitName={"円"}
+          endIcon={<NavigateNextIcon />}
           selected={selectedIndex === INDEX.HOURLY_PAY}
           onClick={() => {
             handleClickSetting(INDEX.HOURLY_PAY);
@@ -146,11 +148,13 @@ export default function SettingsListPage() {
         ></NumberListItem>
       </List>
       <Divider />
+      <div>初期値を設定する</div>
       <List component="nav" aria-label="secondary mailbox folder">
         <TimeListItem
           name={"startWorkTime"}
           title={"出勤時間"}
           value={startWorkTime}
+          endIcon={<NavigateNextIcon />}
           selected={selectedIndex === INDEX.START_WORK_TIME}
           onClick={() => {
             handleClickSetting(INDEX.START_WORK_TIME);
@@ -161,6 +165,7 @@ export default function SettingsListPage() {
           name={"endWorkTime"}
           title={"退勤時間"}
           value={endWorkTime}
+          endIcon={<NavigateNextIcon />}
           selected={selectedIndex === INDEX.END_WORK_TIME}
           onClick={() => {
             handleClickSetting(INDEX.END_WORK_TIME);
@@ -172,6 +177,7 @@ export default function SettingsListPage() {
           title={"休憩時間"}
           value={breakTime}
           unitName={"分"}
+          endIcon={<NavigateNextIcon />}
           selected={selectedIndex === INDEX.BREAK_TIME}
           onClick={() => {
             handleClickSetting(INDEX.BREAK_TIME);

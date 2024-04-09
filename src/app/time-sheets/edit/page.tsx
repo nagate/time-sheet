@@ -1,15 +1,16 @@
 "use client";
 
 import { Button, ButtonProps, List, styled } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import dayjs, { Dayjs } from "dayjs";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
-import { TimeSheets, db } from "@/indexedDB/timeSheetAppDB";
+import { Settings, TimeSheets, db } from "@/indexedDB/timeSheetAppDB";
 import EditIcon from "@mui/icons-material/Edit";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
+import { CONSTANTS } from "@/constants/constants";
 
 const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
   // color: theme.palette.getContrastText(purple[500]),
@@ -32,9 +33,12 @@ export default function TimeSheetEditPage() {
 
   const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
     if (!id) return;
-    const d = await db.timeSheets.where("id").equals(id).first();
     return await db.timeSheets.where("id").equals(id).first();
   }, [id]);
+
+  const settings: Settings | undefined = useLiveQuery(async () => {
+    return await db.settings.where("id").equals(CONSTANTS.SETTING_ID).first();
+  });
 
   const updateTimeSheetsIndexedDB = async (values: TimeSheets) => {
     try {
@@ -86,6 +90,19 @@ export default function TimeSheetEditPage() {
     router.back();
   };
 
+  // 初期値を設定
+  const handleClickInitVal = async () => {
+    if (!timeSheets) return;
+    if (!settings) return;
+
+    await updateTimeSheetsIndexedDB({
+      ...timeSheets,
+      startWorkTime: settings.startWorkTime,
+      endWorkTime: settings.endWorkTime,
+      breakTime: settings.breakTime,
+    });
+  };
+
   return (
     <>
       <List component="nav" aria-label="secondary mailbox folder">
@@ -118,6 +135,13 @@ export default function TimeSheetEditPage() {
         onClick={handleClickReturn}
       >
         戻る
+      </ColorButton>
+      <ColorButton
+        variant="outlined"
+        startIcon={<KeyboardReturnIcon />}
+        onClick={handleClickInitVal}
+      >
+        初期値を設定
       </ColorButton>
     </>
   );

@@ -141,14 +141,14 @@ export default function TimeSheetsPage() {
         <GridActionsCellItem
           key={0}
           icon={<InfoIcon />}
-          // onClick={handleClickDelete}
+          onClick={() => handleClickDetail(params.id)}
           label="詳細確認"
           showInMenu
         />,
         <GridActionsCellItem
           key={1}
           icon={<EditIcon />}
-          // onClick={handleClickDelete}
+          onClick={() => handleClickEdit(params.id)}
           label="編集"
           showInMenu
         />,
@@ -180,11 +180,14 @@ export default function TimeSheetsPage() {
   // Event
   // ========================================
 
+  // 参照
+  const handleClickDetail = (id: GridRowId) => {
+    router.push(`/time-sheets/detail?id=${id.toString()}`);
+  };
+
   // 編集
-  const handleClickEdit = (id: Date) => {
-    // TODO:画面遷移する、IDを渡す
-    const strId = dayjs(id).format("YYYYMMDD");
-    router.push(`/time-sheets/edit?id=${strId}`);
+  const handleClickEdit = (id: GridRowId) => {
+    router.push(`/time-sheets/edit?id=${id.toString()}`);
   };
 
   const handleClickDelete = (id: GridRowId) => {
