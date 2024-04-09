@@ -147,17 +147,6 @@ export default function SettingsListPage() {
       </List>
       <Divider />
       <List component="nav" aria-label="secondary mailbox folder">
-        <NumberListItem
-          name={"breakTime"}
-          title={"休憩時間"}
-          value={breakTime}
-          unitName={"分"}
-          selected={selectedIndex === INDEX.BREAK_TIME}
-          onClick={() => {
-            handleClickSetting(INDEX.BREAK_TIME);
-          }}
-          onClickOk={handleCloseBreakTime}
-        ></NumberListItem>
         <TimeListItem
           name={"startWorkTime"}
           title={"出勤時間"}
@@ -178,6 +167,17 @@ export default function SettingsListPage() {
           }}
           onClickOk={handleOkEndWorkTime}
         ></TimeListItem>
+        <NumberListItem
+          name={"breakTime"}
+          title={"休憩時間"}
+          value={breakTime}
+          unitName={"分"}
+          selected={selectedIndex === INDEX.BREAK_TIME}
+          onClick={() => {
+            handleClickSetting(INDEX.BREAK_TIME);
+          }}
+          onClickOk={handleCloseBreakTime}
+        ></NumberListItem>
       </List>
     </>
   );

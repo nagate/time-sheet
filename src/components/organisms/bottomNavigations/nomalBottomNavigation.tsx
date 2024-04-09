@@ -24,7 +24,7 @@ export default function NormalBottomNavigation() {
     if (value === INDEX_INPUT) {
       router.push("/home");
     } else if (value === INDEX_LIST) {
-      router.push("/time-sheets");
+      router.push("/time-sheets/list");
     } else if (value === INDEX_SETTINGS) {
       router.push("/settings/list");
     }

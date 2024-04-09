@@ -13,6 +13,7 @@ import NumberListItem from "@/components/molecules/listItems/numberListItem";
 import EditIcon from "@mui/icons-material/Edit";
 import TimeListItem from "@/components/molecules/listItems/timeListItem";
 import InformationDialog from "@/components/organisms/dialogs/informationDialog";
+import { useRouter } from "next/navigation";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -93,6 +94,7 @@ const INIT_WORK_TIMES = "00:00";
 const SETTING_ID = 1;
 
 export default function HomePage() {
+  const router = useRouter();
   const [id, setId] = useState<Date>(dayjs().startOf("day").toDate());
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [workTime, setWorkTime] = useState<Dayjs | null>(null);
@@ -200,6 +202,10 @@ export default function HomePage() {
     }
   };
 
+  // ========================================
+  // Event
+  // ========================================
+
   // 出勤
   const handleClickStart = () => {
     if (timeSheets === undefined) return;
@@ -232,6 +238,7 @@ export default function HomePage() {
     setOpenInfoDialog(true);
   };
 
+  // 削除ダイアログ
   const handleCloseDeleteDialog = (cancel: boolean) => {
     setOpenInfoDialog(false);
     if (cancel) return;
@@ -244,6 +251,13 @@ export default function HomePage() {
       breakTime: 0,
     });
     setWorkTime(null);
+  };
+
+  // 編集
+  const handleClickEdit = () => {
+    // TODO:画面遷移する、IDを渡す
+    const strId = dayjs(id).format("YYYYMMDD");
+    router.push(`/time-sheets/edit?id=${strId}`);
   };
 
   return (
@@ -272,7 +286,11 @@ export default function HomePage() {
         >
           削除
         </Button>
-        <Button variant="outlined" startIcon={<Edit />} onClick={() => {}}>
+        <Button
+          variant="outlined"
+          startIcon={<Edit />}
+          onClick={handleClickEdit}
+        >
           編集
         </Button>
       </UtilArea>
