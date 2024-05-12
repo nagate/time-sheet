@@ -9,6 +9,7 @@ import { TimeSheets, db } from "@/indexedDB/timeSheetAppDB";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
+import { TimeSheetimeSheetService } from "@/services/timeSheetsService";
 
 const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
   // color: theme.palette.getContrastText(purple[500]),
@@ -31,7 +32,7 @@ export default function TimeSheetDetailPage() {
 
   const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
     if (!id) return;
-    return await db.timeSheets.where("id").equals(id).first();
+    return await TimeSheetimeSheetService.getTimeSheetById(id);
   }, [id]);
 
   // ========================================

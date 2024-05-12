@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useLiveQuery } from "dexie-react-hooks";
 import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import { CONSTANTS } from "@/constants/constants";
+import { TimeSheetimeSheetService } from "@/services/timeSheetsService";
 
 const ColorButton = styled(Button)<ButtonProps>(({ theme }) => ({
   // color: theme.palette.getContrastText(purple[500]),
@@ -33,7 +34,7 @@ export default function TimeSheetEditPage() {
 
   const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
     if (!id) return;
-    return await db.timeSheets.where("id").equals(id).first();
+    return await TimeSheetimeSheetService.getTimeSheetById(id);
   }, [id]);
 
   const settings: Settings | undefined = useLiveQuery(async () => {

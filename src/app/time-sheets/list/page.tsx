@@ -22,73 +22,43 @@ import dayjs, { Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
 import { CONSTANTS } from "@/constants/constants";
 import YearPicker from "@/components/atoms/datePicker/yearPicker";
+import { TimeSheetimeSheetService } from "@/services/timeSheetsService";
 
 export default function TimeSheetsPage() {
   const router = useRouter();
+  const targetId = useRef<string | null>(null);
+
   const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
   const [targetMonth, setTargetMonth] = useState<Dayjs>(
     dayjs().startOf("month")
   );
-  const targetId = useRef<string | null>(null);
-
-  const thisYear = useRef<string>(dayjs().format("YYYY"));
-  const thisMonth = useRef<string>(dayjs().format("MM"));
 
   // ========================================
   // Get Data From IndexedDB
   // ========================================
   const timeSheets: TimeSheets[] | undefined = useLiveQuery(async () => {
-    return await db.timeSheets
-      .where("yearMonth")
-      .equals(targetMonth.format(CONSTANTS.TIME_SHEET_KEY1_FORMAT))
-      .toArray();
+    return await TimeSheetimeSheetService.getTimeSheetsByMonth(targetMonth);
   }, [targetMonth]);
 
   // ========================================
   // useEffect
   // ========================================
   useEffect(() => {
-    // 取得できていない場合は処理しない
-    if (timeSheets === undefined) return;
-
-    // 情報を取得
-    // TODO: サービス側に実装を移行する
     (async () => {
+      console.log("useEffect");
+      // 取得できていない場合は処理しない
+      if (timeSheets === undefined) return;
       // すでに作成済みの場合は実行させない
       if (timeSheets.length > 0) return;
 
-      const _strTargeYaerMonth = targetMonth.format(
-        CONSTANTS.TIME_SHEET_KEY1_FORMAT
-      );
-      const _targetYear = Number(targetMonth.format("YYYY"));
-      const _targetMonth = Number(targetMonth.format("MM")) - 1;
-
-      // 存在しない場合はデータを作成
-      const countDays = datetimeUtil.getDaysInMonth(_targetYear, _targetMonth);
-
-      const dates: TimeSheets[] = [];
-      const now = new Date();
-      for (let i = 0; i < countDays; i++) {
-        const _id = dayjs()
-          .year(_targetYear)
-          .month(_targetMonth)
-          .date(i + 1)
-          .format(CONSTANTS.TIME_SHEET_ID_FORMAT);
-
-        dates.push({
-          id: _id,
-          yearMonth: _strTargeYaerMonth,
-          breakTime: 0,
-          startWorkTime: null,
-          endWorkTime: null,
-          localUpdatedAt: now,
-        });
-      }
-
-      await db.timeSheets.bulkAdd(dates);
+      // 未作成の場合、タイムシートを作成
+      await TimeSheetimeSheetService.createTimeSheetsByMonth(targetMonth);
     })();
   }, [targetMonth, timeSheets]);
 
+  // ========================================
+  // Column Definition
+  // ========================================
   const columns: GridColDef[] = [
     {
       field: "id",
@@ -177,19 +147,6 @@ export default function TimeSheetsPage() {
     },
   ];
 
-  const updateTimeSheetsIndexedDB = async (values: TimeSheets) => {
-    try {
-      // TODO: サービス側に実装を移行する
-      // TODO: 値に変更がなければ、更新させない
-      await db.timeSheets.put({
-        ...values,
-        localUpdatedAt: new Date(),
-      });
-    } catch (error) {
-      throw error;
-    }
-  };
-
   // ========================================
   // Event
   // ========================================
@@ -217,23 +174,14 @@ export default function TimeSheetsPage() {
   };
 
   // 削除ダイアログ
-  const handleCloseDeleteDialog = (cancel: boolean) => {
+  const handleCloseDeleteDialog = async (cancel: boolean) => {
     setOpenInfoDialog(false);
     if (cancel) return;
     if (timeSheets === undefined) return;
     if (!targetId.current) return;
-    const _timeSheet = timeSheets.find((v) => v.id === targetId.current);
-    console.log(timeSheets);
 
-    console.log(_timeSheet);
-    if (!_timeSheet) return;
+    await TimeSheetimeSheetService.logicalDelete(targetId.current);
 
-    updateTimeSheetsIndexedDB({
-      ..._timeSheet,
-      startWorkTime: null,
-      endWorkTime: null,
-      breakTime: 0,
-    });
     targetId.current = null;
   };
 

@@ -5,7 +5,7 @@ import datetimeUtil from "@/utils/datetime";
 import { NumberUtil } from "@/utils/numburUtil";
 import { Delete, Edit, TimeToLeave, Work } from "@mui/icons-material";
 import { Box, Button, List, styled } from "@mui/material";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Settings, TimeSheets, db } from "../../indexedDB/timeSheetAppDB";
 import { useLiveQuery } from "dexie-react-hooks";
 import dayjs, { Dayjs } from "dayjs";
@@ -15,6 +15,7 @@ import TimeListItem from "@/components/molecules/listItems/timeListItem";
 import InformationDialog from "@/components/organisms/dialogs/informationDialog";
 import { useRouter } from "next/navigation";
 import { CONSTANTS } from "@/constants/constants";
+import { TimeSheetimeSheetService } from "@/services/timeSheetsService";
 
 const TodayBox = styled(Box)({
   display: "flex",
@@ -101,30 +102,24 @@ export default function HomePage() {
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [workTime, setWorkTime] = useState<Dayjs | null>(null);
   const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
-
-  const thisYear = useRef<string>(
-    datetimeUtil.getFormattedDatetime({
-      date: new Date(),
-      format: "yyyy",
-      zeroFilled: true,
-    })
-  );
-  const thisMonth = useRef<string>(
-    datetimeUtil.getFormattedDatetime({
-      date: new Date(),
-      format: "MM",
-      zeroFilled: true,
-    })
+  const [targetMonth, setTargetMonth] = useState<Dayjs>(
+    dayjs().startOf("month")
   );
 
+  // ========================================
+  // Get Data From IndexedDB
+  // ========================================
   const timeSheets: TimeSheets | undefined = useLiveQuery(async () => {
-    return await db.timeSheets.where("id").equals(id).first();
+    return await TimeSheetimeSheetService.getTimeSheetById(id);
   }, [id]);
 
   const settings: Settings | undefined = useLiveQuery(async () => {
     return await db.settings.get(SETTING_ID);
   }, []);
 
+  // ========================================
+  // useEffect
+  // ========================================
   useEffect(() => {
     // 1秒おきに日付を更新
     const intervalTime = 1000;
@@ -151,84 +146,47 @@ export default function HomePage() {
   ]);
 
   useEffect(() => {
-    // 情報を取得
-    // TODO: サービス側に実装を移行する
-    // TODO: トランザクションを貼る
+    // 取得できていない場合は処理しない
+    if (timeSheets === undefined) return;
+
     (async () => {
-      let data = await db.timeSheets.where("id").equals(id).first();
       // すでに作成済みの場合は実行させない
-      if (data !== undefined) return;
+      if (timeSheets !== undefined) return;
 
-      // 存在しない場合はデータを作成
-      const countDays = datetimeUtil.getDaysInMonth(
-        Number(thisYear.current),
-        Number(thisMonth.current)
-      );
-
-      const dates: TimeSheets[] = [];
-      const now = new Date();
-      for (let i = 0; i < countDays; i++) {
-        dates.push({
-          id: dayjs()
-            .year(Number(thisYear.current))
-            .month(Number(thisMonth.current) - 1)
-            .date(i + 1)
-            .format("YYYYMMDD"),
-          yearMonth: `${thisYear.current}${thisMonth.current}`,
-          breakTime: INIT_BREAK_TIME,
-          startWorkTime: null,
-          endWorkTime: null,
-          localUpdatedAt: now,
-        });
-      }
-
-      data = await db.timeSheets.where("id").equals(id).first();
-      // すでに作成済みの場合は実行させない
-      if (data !== undefined) return;
-      await db.timeSheets.bulkAdd(dates);
+      // 未作成の場合、タイムシートを作成
+      await TimeSheetimeSheetService.createTimeSheetsByMonth(targetMonth);
     })();
-  }, [id, timeSheets]);
-
-  const updateTimeSheetsIndexedDB = async (values: TimeSheets) => {
-    try {
-      // TODO: サービス側に実装を移行する
-      // TODO: 値に変更がなければ、更新させない
-      await db.timeSheets.put({
-        ...values,
-        id,
-        localUpdatedAt: new Date(),
-      });
-    } catch (error) {
-      throw error;
-    }
-  };
+  }, [id, targetMonth, timeSheets]);
 
   // ========================================
   // Event
   // ========================================
 
   // 出勤
-  const handleClickStart = () => {
+  const handleClickStart = async () => {
     if (timeSheets === undefined) return;
-    updateTimeSheetsIndexedDB({
+
+    await TimeSheetimeSheetService.updateTimeSheet({
       ...timeSheets,
       startWorkTime: new Date(),
     });
   };
 
   // 退勤
-  const handleClickEnd = () => {
+  const handleClickEnd = async () => {
     if (timeSheets === undefined) return;
-    updateTimeSheetsIndexedDB({
+
+    await TimeSheetimeSheetService.updateTimeSheet({
       ...timeSheets,
       endWorkTime: new Date(),
     });
   };
 
   // 休憩
-  const handleChangeBreakTime = (value: number) => {
+  const handleChangeBreakTime = async (value: number) => {
     if (timeSheets === undefined) return;
-    updateTimeSheetsIndexedDB({
+
+    await TimeSheetimeSheetService.updateTimeSheet({
       ...timeSheets,
       breakTime: value,
     });
@@ -240,17 +198,13 @@ export default function HomePage() {
   };
 
   // 削除ダイアログ
-  const handleCloseDeleteDialog = (cancel: boolean) => {
+  const handleCloseDeleteDialog = async (cancel: boolean) => {
     setOpenInfoDialog(false);
     if (cancel) return;
 
     if (timeSheets === undefined) return;
-    updateTimeSheetsIndexedDB({
-      ...timeSheets,
-      startWorkTime: null,
-      endWorkTime: null,
-      breakTime: 0,
-    });
+    await TimeSheetimeSheetService.logicalDelete(timeSheets.id);
+
     setWorkTime(null);
   };
 
