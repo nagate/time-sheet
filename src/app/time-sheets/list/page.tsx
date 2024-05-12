@@ -23,6 +23,7 @@ import { useRouter } from "next/navigation";
 import { CONSTANTS } from "@/constants/constants";
 import YearPicker from "@/components/atoms/datePicker/yearPicker";
 import { TimeSheetimeSheetService } from "@/services/timeSheetsService";
+import CalendarNavigation from "@/components/molecules/navigations/calendarNavigation";
 
 export default function TimeSheetsPage() {
   const router = useRouter();
@@ -151,6 +152,16 @@ export default function TimeSheetsPage() {
   // Event
   // ========================================
 
+  // 前月へ
+  const handleClickPrevMonth = (date: Date) => {
+    setTargetMonth(dayjs(date).startOf("month"));
+  };
+
+  // 次月へ
+  const handleClickNextMonth = (date: Date) => {
+    setTargetMonth(dayjs(date).startOf("month"));
+  };
+
   // 対象年月の変更
   const handleChangeTargetMonth = (yearMonth: Dayjs | null) => {
     console.log(yearMonth);
@@ -185,15 +196,14 @@ export default function TimeSheetsPage() {
     targetId.current = null;
   };
 
-  // TODO: 月を変更できるようにする
   return (
     <>
       <Box sx={{ height: 500, width: "100%" }}>
-        <Box>{targetMonth.format("YYYY/MM")}</Box>
-        <YearPicker
-          value={targetMonth}
-          onChange={handleChangeTargetMonth}
-        ></YearPicker>
+        <CalendarNavigation
+          onPreviousMonthClick={handleClickPrevMonth}
+          onNextMonthClick={handleClickNextMonth}
+          currentDate={targetMonth.toDate()}
+        ></CalendarNavigation>
         <DataGrid
           rows={timeSheets ?? []}
           columns={columns}

@@ -50,7 +50,7 @@ export class TimeSheetimeSheetService {
         CONSTANTS.TIME_SHEET_KEY1_FORMAT
       );
       const _targetYear = Number(targetMonth.format("YYYY"));
-      const _targetMonth = Number(targetMonth.format("MM")) - 1;
+      const _targetMonth = Number(targetMonth.format("MM"));
 
       // 存在しない場合はデータを作成
       const countDays = datetimeUtil.getDaysInMonth(_targetYear, _targetMonth);
@@ -60,7 +60,7 @@ export class TimeSheetimeSheetService {
       for (let i = 0; i < countDays; i++) {
         const _id = dayjs()
           .year(_targetYear)
-          .month(_targetMonth)
+          .month(_targetMonth - 1)
           .date(i + 1)
           .format(CONSTANTS.TIME_SHEET_ID_FORMAT);
 
