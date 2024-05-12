@@ -18,25 +18,35 @@ import { useLiveQuery } from "dexie-react-hooks";
 import EditIcon from "@mui/icons-material/Edit";
 import InfoIcon from "@mui/icons-material/Info";
 import InformationDialog from "@/components/organisms/dialogs/informationDialog";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { useRouter } from "next/navigation";
 import { CONSTANTS } from "@/constants/constants";
+import YearPicker from "@/components/atoms/datePicker/yearPicker";
 
 export default function TimeSheetsPage() {
   const router = useRouter();
   const [openInfoDialog, setOpenInfoDialog] = useState<boolean>(false);
+  const [targetMonth, setTargetMonth] = useState<Dayjs>(
+    dayjs().startOf("month")
+  );
   const targetId = useRef<string | null>(null);
 
   const thisYear = useRef<string>(dayjs().format("YYYY"));
   const thisMonth = useRef<string>(dayjs().format("MM"));
 
+  // ========================================
+  // Get Data From IndexedDB
+  // ========================================
   const timeSheets: TimeSheets[] | undefined = useLiveQuery(async () => {
     return await db.timeSheets
       .where("yearMonth")
-      .equals(`${thisYear.current}${thisMonth.current}`)
+      .equals(targetMonth.format(CONSTANTS.TIME_SHEET_KEY1_FORMAT))
       .toArray();
-  }, [`${thisYear.current}${thisMonth.current}`]);
+  }, [targetMonth]);
 
+  // ========================================
+  // useEffect
+  // ========================================
   useEffect(() => {
     // 取得できていない場合は処理しない
     if (timeSheets === undefined) return;
@@ -47,23 +57,27 @@ export default function TimeSheetsPage() {
       // すでに作成済みの場合は実行させない
       if (timeSheets.length > 0) return;
 
-      // 存在しない場合はデータを作成
-      const countDays = datetimeUtil.getDaysInMonth(
-        Number(thisYear.current),
-        Number(thisMonth.current)
+      const _strTargeYaerMonth = targetMonth.format(
+        CONSTANTS.TIME_SHEET_KEY1_FORMAT
       );
+      const _targetYear = Number(targetMonth.format("YYYY"));
+      const _targetMonth = Number(targetMonth.format("MM")) - 1;
+
+      // 存在しない場合はデータを作成
+      const countDays = datetimeUtil.getDaysInMonth(_targetYear, _targetMonth);
 
       const dates: TimeSheets[] = [];
       const now = new Date();
       for (let i = 0; i < countDays; i++) {
         const _id = dayjs()
-          .year(Number(thisYear.current))
-          .month(Number(thisMonth.current))
+          .year(_targetYear)
+          .month(_targetMonth)
           .date(i + 1)
           .format(CONSTANTS.TIME_SHEET_ID_FORMAT);
+
         dates.push({
           id: _id,
-          yearMonth: `${thisYear.current}${thisMonth.current}`,
+          yearMonth: _strTargeYaerMonth,
           breakTime: 0,
           startWorkTime: null,
           endWorkTime: null,
@@ -73,7 +87,7 @@ export default function TimeSheetsPage() {
 
       await db.timeSheets.bulkAdd(dates);
     })();
-  }, [timeSheets]);
+  }, [targetMonth, timeSheets]);
 
   const columns: GridColDef[] = [
     {
@@ -180,6 +194,13 @@ export default function TimeSheetsPage() {
   // Event
   // ========================================
 
+  // 対象年月の変更
+  const handleChangeTargetMonth = (yearMonth: Dayjs | null) => {
+    console.log(yearMonth);
+    if (!yearMonth) return;
+    setTargetMonth(yearMonth);
+  };
+
   // 参照
   const handleClickDetail = (id: GridRowId) => {
     router.push(`/time-sheets/detail?id=${id.toString()}`);
@@ -216,10 +237,15 @@ export default function TimeSheetsPage() {
     targetId.current = null;
   };
 
+  // TODO: 月を変更できるようにする
   return (
     <>
       <Box sx={{ height: 500, width: "100%" }}>
-        <Box>{`${thisYear.current}/${thisMonth.current}`}</Box>
+        <Box>{targetMonth.format("YYYY/MM")}</Box>
+        <YearPicker
+          value={targetMonth}
+          onChange={handleChangeTargetMonth}
+        ></YearPicker>
         <DataGrid
           rows={timeSheets ?? []}
           columns={columns}

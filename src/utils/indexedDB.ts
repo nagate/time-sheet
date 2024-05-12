@@ -3,6 +3,8 @@ const dbName = "myDatabase";
 const storeName = "myStore";
 const timeSheetStore = "timeSheet";
 
+// TODO: 当ファイルは削除する
+
 export function initDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(dbName, 1);

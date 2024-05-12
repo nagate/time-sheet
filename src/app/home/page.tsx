@@ -259,6 +259,10 @@ export default function HomePage() {
     router.push(`/time-sheets/edit?id=${id}`);
   };
 
+  // TODO: 有給休暇
+  // TODO: memo
+  // TODO: 交通費
+
   return (
     <>
       <TodayBox>
